@@ -154,4 +154,29 @@ gpu_backend = "cuda"
 
 ---
 # 选定的模型
-(Qwen3‑4B‑Instruct‑2507) {https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507}
+[Qwen3‑4B‑Instruct‑2507](https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507)
+# 选择的模型框架
+[llama.cpp](https://github.com/ggml-org/llama.cpp)
+## 安装过程
+### 安装nix
+先安装[nix](https://nixos.org/download/)
+
+注意：nix默认关闭了一些功能，启动
+```
+mkdir -p ~/.config/nix
+printf "experimental-features = nix-command flakes\n" >> ~/.config/nix/nix.conf
+
+```
+
+```
+source ~/.profile 2>/dev/null || true
+source ~/.bashrc 2>/dev/null || true
+
+```
+
+### 下载模型
+
+一般huggingface模型页面右上方有三个小点的按钮，点开，选择Clone repository，可以使用git模式，但是git clone 默认不下载大文件，所以先让它支持大文件
+`sudo apt install git-lfs`
+
+然后再下载，文件很大，需要等待。
