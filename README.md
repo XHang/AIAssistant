@@ -153,3 +153,5 @@ gpu_backend = "cuda"
 - 目录结构清晰  
 
 ---
+# 选定的模型
+(Qwen3‑4B‑Instruct‑2507) {https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507}
