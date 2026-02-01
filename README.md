@@ -209,4 +209,43 @@ source ~/.bashrc 2>/dev/null || true
 
 
 
+# 训练
 
+除了全参数训练，个人能搞的也就几种
+
+零训练
+
+## RAG
+
+### 概念
+
+检索增强
+
+RAG 的全名是：
+**Retrieval-Augmented Generation**
+
+**检索增强生成**
+
+拆开来看：
+
+* **Retrieval（检索）**：从外部知识库里找信息
+
+* **Augmented（增强）**：把这些信息提供给模型
+
+* **Generation（生成）**：模型根据检索到的知识生成答案
+
+### 组成
+
+#### Embedding 模型
+
+#### 向量数据库
+
+#### RAG 框架
+
+
+
+## LoRA / QLoRA
+
+轻量微调
+
+## 
