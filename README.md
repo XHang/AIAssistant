@@ -208,3 +208,5 @@ source ~/.bashrc 2>/dev/null || true
 我写了一个bat脚本,按照脚本的提示一步步操作就行了，linux也写了个，不过没测试。算了
 
 
+
+
