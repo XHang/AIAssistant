@@ -1,4 +1,5 @@
 import json
+import re
 
 from translator_handler.base import BaseHandler
 from translator_handler.registry import register_handler
@@ -36,3 +37,8 @@ class JSONHandler(BaseHandler):
 
     def serialize(self) -> str:
         return json.dumps(self._data, ensure_ascii=False, indent=4)
+
+    def keep_the_same(self, text:str)->bool:
+        # 检测是否包含日语字符（平假名、片假名、汉字）
+        japanese_pattern = re.compile(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]')
+        return not bool(japanese_pattern.search(text))
