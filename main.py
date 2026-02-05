@@ -1,14 +1,48 @@
 import sys
+import threading
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QTextEdit, QLineEdit,
     QPushButton, QFileDialog, QMessageBox,QComboBox,QProgressBar
 )
+from PySide6.QtCore import Signal, QObject
 from llama_server import LlamaServer
 from translator import Translator
+
+class WorkerSignals(QObject):
+    finished = Signal(str, str)  # result, target_lang
+    progress = Signal(int, int)  # done, total
+    error = Signal(str)  # error message
+
+class FileTranslateWorker(threading.Thread):
+    def __init__(self, translator, content, target_lang):
+        super().__init__()
+        self.translator = translator
+        self.content = content
+        self.target_lang = target_lang
+        self.signals = WorkerSignals()
+        
+    def run(self):
+        try:
+            # 回调函数：发送进度信号
+            def update_progress(done, total):
+                self.signals.progress.emit(done, total)
+            
+            # 执行翻译
+            result = self.translator.translate_from_file(
+                self.content,
+                self.target_lang,
+                progress_callback=update_progress
+            )
+            
+            # 发送完成信号
+            self.signals.finished.emit(result, self.target_lang)
+        except Exception as e:
+            self.signals.error.emit(str(e))
 
 class TranslatorGUI(QWidget):
     def __init__(self):
         super().__init__()
+        self.worker = None
         self.setWindowTitle("AI 翻译工具 - PySide6 + llama.cpp")
         self.resize(600, 500)
 
@@ -77,27 +111,49 @@ class TranslatorGUI(QWidget):
         # ⭐ 显示进度条
         self.progress.setVisible(True)
         self.progress.setValue(0)
-
-        # ⭐ 回调函数：更新进度条
-        def update_progress(done, total):
-            percent = int(done / total * 100)
-            self.progress.setValue(percent)
-
-        # ⭐ 调用翻译器（传入回调）
-        result = self.translator.translate_from_file(
-            content,
-            target_lang,
-            progress_callback=update_progress
-        )
-
+        
+        # ⭐ 创建并启动后台线程
+        self.worker = FileTranslateWorker(self.translator, content, target_lang)
+        self.worker.signals.progress.connect(self.update_progress_bar)
+        self.worker.signals.finished.connect(self.on_translation_finished)
+        self.worker.signals.error.connect(self.on_translation_error)
+        self.worker.start()
+        
+        # ⭐ 禁用按钮防止重复点击
+        self.file_btn.setEnabled(False)
+        self.file_btn.setText("翻译中...")
+    
+    def update_progress_bar(self, done, total):
+        percent = int(done / total * 100)
+        self.progress.setValue(percent)
+    
+    def on_translation_finished(self, result, target_lang):
         # ⭐ 翻译完成后隐藏进度条
         self.progress.setVisible(False)
-
+        
+        # ⭐ 恢复按钮状态
+        self.file_btn.setEnabled(True)
+        self.file_btn.setText("选择文件并翻译")
+        
+        # ⭐ 保存结果
         output_path = "output_translated.txt"
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(result)
-
-        QMessageBox.information(self, "完成", f"翻译完成（{target_lang}），已保存到：{output_path}")
+        try:
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write(result)
+            QMessageBox.information(self, "完成", f"翻译完成（{target_lang}），已保存到：{output_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "错误", f"保存文件失败：{str(e)}")
+    
+    def on_translation_error(self, error_msg):
+        # ⭐ 隐藏进度条
+        self.progress.setVisible(False)
+        
+        # ⭐ 恢复按钮状态
+        self.file_btn.setEnabled(True)
+        self.file_btn.setText("选择文件并翻译")
+        
+        # ⭐ 显示错误信息
+        QMessageBox.critical(self, "翻译错误", f"翻译过程中发生错误：\n{error_msg}")
 
     def closeEvent(self, event):
         self.server.stop()
