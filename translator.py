@@ -1,6 +1,9 @@
+from typing import List
+
 import requests
 import json
 from translator_handler  import HANDLER_REGISTRY
+from translator_handler.base import BaseHandler
 
 
 class Translator:
@@ -11,7 +14,9 @@ class Translator:
         self.url = f"http://127.0.0.1:{config['port']}/v1/chat/completions"
 
          # ⭐ 自动实例化所有已注册的 Handler
-        self.handlers = [cls(self.url ) for cls in HANDLER_REGISTRY]
+        self.handlers: List[BaseHandler] = [
+            cls(self.api_url) for cls in HANDLER_REGISTRY
+        ]
 
 
     def translate(self, text, target_lang="中文"):
