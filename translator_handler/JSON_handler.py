@@ -14,7 +14,8 @@ class JSONHandler(BaseHandler):
     def can_handle(self, text: str) -> bool:
         try:
             data = json.loads(text)
-            return isinstance(data, dict)
+            is_json:bool =  isinstance(data, dict)
+            return is_json
         except:
             return False
 

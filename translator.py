@@ -15,7 +15,7 @@ class Translator:
 
          # ⭐ 自动实例化所有已注册的 Handler
         self.handlers: List[BaseHandler] = [
-            cls(self.api_url) for cls in HANDLER_REGISTRY
+            cls(self.url) for cls in HANDLER_REGISTRY
         ]
 
 

@@ -34,8 +34,11 @@ class LlamaServer:
         time.sleep(2)
 
     def stop(self):
-        if self.process:
-            try:
-                self.process.terminate()
-            except:
-                pass
+        if self.process is None:
+            return
+
+        try:
+            self.process.terminate()
+        except Exception as e:
+            raise RuntimeError(f"终止进程失败: {e}") from e
+
