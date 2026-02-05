@@ -9,16 +9,17 @@ from llama_server import LlamaServer
 from translator import Translator
 
 class WorkerSignals(QObject):
-    finished = Signal(str, str)  # result, target_lang
+    finished = Signal(str, str, str)  # result, target_lang, file_path
     progress = Signal(int, int)  # done, total
     error = Signal(str)  # error message
 
 class FileTranslateWorker(threading.Thread):
-    def __init__(self, translator, content, target_lang):
+    def __init__(self, translator, content, target_lang, file_path):
         super().__init__()
         self.translator = translator
         self.content = content
         self.target_lang = target_lang
+        self.file_path = file_path
         self.signals = WorkerSignals()
         
     def run(self):
@@ -34,8 +35,8 @@ class FileTranslateWorker(threading.Thread):
                 progress_callback=update_progress
             )
             
-            # 发送完成信号
-            self.signals.finished.emit(result, self.target_lang)
+            # 发送完成信号（包含文件路径）
+            self.signals.finished.emit(result, self.target_lang, self.file_path)
         except Exception as e:
             self.signals.error.emit(str(e))
 
@@ -43,6 +44,7 @@ class TranslatorGUI(QWidget):
     def __init__(self):
         super().__init__()
         self.worker = None
+        self.input_file_path = None
         self.setWindowTitle("AI 翻译工具 - PySide6 + llama.cpp")
         self.resize(600, 500)
 
@@ -108,12 +110,15 @@ class TranslatorGUI(QWidget):
 
         target_lang = self.lang_box.currentText()
 
+        # ⭐ 保存输入文件路径
+        self.input_file_path = file_path
+
         # ⭐ 显示进度条
         self.progress.setVisible(True)
         self.progress.setValue(0)
         
         # ⭐ 创建并启动后台线程
-        self.worker = FileTranslateWorker(self.translator, content, target_lang)
+        self.worker = FileTranslateWorker(self.translator, content, target_lang, file_path)
         self.worker.signals.progress.connect(self.update_progress_bar)
         self.worker.signals.finished.connect(self.on_translation_finished)
         self.worker.signals.error.connect(self.on_translation_error)
@@ -127,7 +132,7 @@ class TranslatorGUI(QWidget):
         percent = int(done / total * 100)
         self.progress.setValue(percent)
     
-    def on_translation_finished(self, result, target_lang):
+    def on_translation_finished(self, result, target_lang, file_path):
         # ⭐ 翻译完成后隐藏进度条
         self.progress.setVisible(False)
         
@@ -135,8 +140,13 @@ class TranslatorGUI(QWidget):
         self.file_btn.setEnabled(True)
         self.file_btn.setText("选择文件并翻译")
         
-        # ⭐ 保存结果
-        output_path = "output_translated.txt"
+        # ⭐ 保存结果到与输入文件相同的文件夹
+        import os
+        input_dir = os.path.dirname(file_path)
+        input_filename = os.path.splitext(os.path.basename(file_path))[0]
+        output_filename = f"{input_filename}_translated.txt"
+        output_path = os.path.join(input_dir, output_filename)
+        
         try:
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(result)
