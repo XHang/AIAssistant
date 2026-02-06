@@ -1,20 +1,17 @@
-import json
 import subprocess
 import time
+from config_manager import config_manager
 
 
 class LlamaServer:
-    def __init__(self, config_path="config.json"):
-        with open(config_path, "r", encoding="utf-8") as f:
-            self.config = json.load(f)
-
+    def __init__(self):
         self.process = None
 
     def start(self):
-        model = self.config["model"]
-        ctx = str(self.config["ctx_size"])
-        threads = str(self.config["threads"])
-        port = str(self.config["port"])
+        model = config_manager.get_config("model")
+        ctx = str(config_manager.get_config("ctx_size"))
+        threads = str(config_manager.get_config("threads"))
+        port = str(config_manager.get_config("port"))
 
         cmd = [
             "llama-server.exe",

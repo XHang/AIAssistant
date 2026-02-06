@@ -1,23 +1,25 @@
+"""
+   翻译相关文件
+"""
 from typing import List
-
 import requests
-import json
-from handler  import HANDLER_REGISTRY
+from config_manager import config_manager
+from handler import HANDLER_REGISTRY
 from handler.base import BaseHandler
 
 
 class Translator:
-    def __init__(self, config_path="config.json"):
-        with open(config_path, "r", encoding="utf-8") as f:
-            config = json.load(f)
+    """
+        翻译类
+    """
 
-        self.url = f"http://127.0.0.1:{config['port']}/v1/chat/completions"
+    def __init__(self):
+        self.url = config_manager.get_api_url()
 
-         # ⭐ 自动实例化所有已注册的 Handler
+        # ⭐ 自动实例化所有已注册的 Handler
         self.handlers: List[BaseHandler] = [
             cls(self.url) for cls in HANDLER_REGISTRY
         ]
-
 
     def _make_translation_request(self, text: str, target_lang: str) -> str:
         """统一的翻译API调用方法"""

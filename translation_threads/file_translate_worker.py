@@ -2,6 +2,7 @@ from PySide6.QtCore import Signal, QObject
 import threading
 from translator import Translator
 
+
 class WorkerSignals(QObject):
     finished = Signal(str, str, str)  # result, target_lang, file_path
     progress = Signal(int, int)  # done, total
