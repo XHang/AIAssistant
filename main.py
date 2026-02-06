@@ -28,30 +28,34 @@ class TranslatorGUI(QWidget):
 
         self.chat_box = QTextEdit()
         self.chat_box.setReadOnly(True)
+        layout.addWidget(self.chat_box)
 
         self.input_box = QLineEdit()
         self.input_box.setPlaceholderText("输入要翻译的内容...")
+        layout.addWidget(self.input_box)
 
         self.send_btn = QPushButton("翻译")
         self.send_btn.clicked.connect(self.handle_translate)
+        layout.addWidget(self.send_btn)
 
         self.file_btn = QPushButton("选择文件并翻译")
         self.file_btn.clicked.connect(self.handle_file_translate)
+        layout.addWidget(self.file_btn)
 
         self.lang_box = QComboBox()
         self.lang_box.addItems(["中文", "英文", "日文", "韩文", "法文"])
         self.lang_box.setCurrentText("中文")  # 默认中文
+        layout.addWidget(self.lang_box)
 
         self.progress = QProgressBar()
         self.progress.setValue(0)
         self.progress.setVisible(False)  # 默认隐藏
-
         layout.addWidget(self.progress)
-        layout.addWidget(self.lang_box)
-        layout.addWidget(self.chat_box)
-        layout.addWidget(self.input_box)
-        layout.addWidget(self.send_btn)
-        layout.addWidget(self.file_btn)
+
+
+
+
+
 
         self.setLayout(layout)
 
