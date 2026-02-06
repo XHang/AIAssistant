@@ -45,6 +45,7 @@ class TranslatorGUI(QWidget):
         super().__init__()
         self.worker = None
         self.input_file_path = None
+        self.current_handler = None  # 当前使用的翻译处理器
         self.setWindowTitle("AI 翻译工具 - PySide6 + llama.cpp")
         self.resize(600, 500)
 
@@ -113,6 +114,18 @@ class TranslatorGUI(QWidget):
         # ⭐ 保存输入文件路径
         self.input_file_path = file_path
 
+        # ⭐ 查找合适的处理器并保存引用
+        for handler in self.translator.handlers:
+            if handler.can_handle(content):
+                self.current_handler = handler
+                # 加载内容到处理器
+                self.current_handler.load(content)
+                break
+        else:
+            self.current_handler = None
+            QMessageBox.warning(self, "警告", "未找到合适的翻译处理器")
+            return
+
         # ⭐ 显示进度条
         self.progress.setVisible(True)
         self.progress.setValue(0)
@@ -165,7 +178,52 @@ class TranslatorGUI(QWidget):
         # ⭐ 显示错误信息
         QMessageBox.critical(self, "翻译错误", f"翻译过程中发生错误：\n{error_msg}")
 
+    def save_temp_translation_file(self):
+        """保存临时翻译文件"""
+        if not self.input_file_path or not self.current_handler:
+            return False
+            
+        try:
+            import os
+            # 生成临时文件路径
+            input_dir = os.path.dirname(self.input_file_path)
+            input_filename = os.path.splitext(os.path.basename(self.input_file_path))[0]
+            temp_filename = f"{input_filename}_temp.txt"
+            temp_path = os.path.join(input_dir, temp_filename)
+            
+            # 获取当前翻译状态并保存
+            temp_content = self.current_handler.serialize()
+            with open(temp_path, "w", encoding="utf-8") as f:
+                f.write(temp_content)
+            
+            print(f"临时文件已保存到: {temp_path}")
+            return True
+        except Exception as e:
+            print(f"保存临时文件失败: {e}")
+            return False
+    
     def closeEvent(self, event):
+        # 检查是否有翻译线程正在运行
+        if self.worker and self.worker.is_alive():
+            reply = QMessageBox.question(
+                self, 
+                '确认退出', 
+                '翻译正在进行中，是否保存当前进度并退出？',
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            
+            if reply == QMessageBox.Yes:
+                # 保存临时文件
+                if self.save_temp_translation_file():
+                    QMessageBox.information(self, "提示", "翻译进度已保存为临时文件")
+                else:
+                    QMessageBox.warning(self, "警告", "临时文件保存失败")
+            else:
+                event.ignore()
+                return
+        
+        # 停止服务器
         self.server.stop()
         event.accept()
 
