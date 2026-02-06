@@ -1,8 +1,8 @@
 import json
 import re
 
-from translator_handler.base import BaseHandler
-from translator_handler.registry import register_handler
+from handler.base import BaseHandler
+from handler.registry import register_handler
 
 
 @register_handler

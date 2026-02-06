@@ -10,7 +10,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from translator_handler.JSON_handler import JSONHandler
+    from handler.JSON_handler import JSONHandler
     handler = JSONHandler(api_url="http://test.com")
     keep_the_same = handler.keep_the_same
     print("✓ 使用修改后的 JSONHandler")
