@@ -45,6 +45,7 @@ class BaseHandler:
             original = self.get_text(i)
             if not self.keep_the_same(original):
                 translated = self._translate_single(original, target_lang)
+                print(f"original text:{original},Translated text: {translated}")
                 self.set_text(i, translated)
 
             if progress_callback:

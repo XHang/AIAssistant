@@ -76,7 +76,7 @@ class TranslatorGUI(QWidget):
             deal with file translate
         :return: none
         """
-        file_path, _ = QFileDialog.getOpenFileName(self, "选择要翻译的文件", "", "文本文件 (*.txt)")
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择要翻译的文件", "")
         if not file_path:
             return
 
