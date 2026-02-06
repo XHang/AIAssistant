@@ -205,23 +205,11 @@ class TranslatorGUI(QWidget):
     def closeEvent(self, event):
         # 检查是否有翻译线程正在运行
         if self.worker and self.worker.is_alive():
-            reply = QMessageBox.question(
-                self, 
-                '确认退出', 
-                '翻译正在进行中，是否保存当前进度并退出？',
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
-            )
-            
-            if reply == QMessageBox.Yes:
-                # 保存临时文件
-                if self.save_temp_translation_file():
-                    QMessageBox.information(self, "提示", "翻译进度已保存为临时文件")
-                else:
-                    QMessageBox.warning(self, "警告", "临时文件保存失败")
+            # 直接保存临时文件，无需用户确认
+            if self.save_temp_translation_file():
+                print("翻译进度已自动保存为临时文件")
             else:
-                event.ignore()
-                return
+                print("临时文件保存失败")
         
         # 停止服务器
         self.server.stop()
