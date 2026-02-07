@@ -4,9 +4,11 @@ from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QTextEdit, QLineEdit,
     QPushButton, QFileDialog, QMessageBox, QComboBox, QProgressBar
 )
+from PySide6.QtCore import QTimer
 from llama_server import LlamaServer
 from config_manager import config_manager
 from translation_manager import TranslationManager
+from conversation_worker import ConversationManager
 
 
 class TranslatorGUI(QWidget):
@@ -17,7 +19,7 @@ class TranslatorGUI(QWidget):
     def __init__(self):
         super().__init__()
         self.translation_manager = TranslationManager()
-        self.setWindowTitle("AI 翻译工具 - PySide6 + llama.cpp")
+        self.setWindowTitle("AI 对话工具 - PySide6 + llama.cpp")
         self.resize(600, 500)
 
         # 启动 llama-server
@@ -27,6 +29,11 @@ class TranslatorGUI(QWidget):
         # 预加载配置以确保只读取一次
         config_manager.load_config()
 
+        # 初始化对话管理系统
+        self.conversation_manager = ConversationManager(config_manager.get_api_url())
+        self.conversation_manager.set_gui_update_callback(self.on_conversation_message)
+        self.conversation_manager.start()
+
         layout = QVBoxLayout()
 
         self.chat_box = QTextEdit()
@@ -34,10 +41,10 @@ class TranslatorGUI(QWidget):
         layout.addWidget(self.chat_box)
 
         self.input_box = QLineEdit()
-        self.input_box.setPlaceholderText("输入要翻译的内容...")
+        self.input_box.setPlaceholderText("输入要对话的内容...")
         layout.addWidget(self.input_box)
 
-        self.send_btn = QPushButton("翻译")
+        self.send_btn = QPushButton("对话")
         self.send_btn.clicked.connect(self.handle_translate)
         layout.addWidget(self.send_btn)
 
@@ -56,20 +63,69 @@ class TranslatorGUI(QWidget):
         layout.addWidget(self.progress)
 
         self.setLayout(layout)
+        
+        # 设置定时器定期处理消息队列
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.process_conversation_messages)
+        self.timer.start(100)  # 每100毫秒检查一次
+
+    def on_ai_message(self, chunk):
+        self.chat_box.append(chunk)
+
+    def on_conversation_message(self, msg_type, content, metadata):
+        """处理来自对话系统的消息"""
+        if msg_type == "ai_response":
+            if content:  # 部分回复内容
+                # 如果是第一条回复，先添加前缀
+                if not hasattr(self, '_current_reply_started') or not self._current_reply_started:
+                    self.chat_box.append("AI：")
+                    self._current_reply_started = True
+                
+                # 追加回复内容
+                self.chat_box.insertPlainText(content)
+                
+                # 强制GUI刷新
+                QApplication.processEvents()
+                
+            elif metadata.get("complete"):  # 完整回复结束
+                # 添加换行和分隔符
+                self.chat_box.append("\n" + "-" * 30 + "\n")
+                self._current_reply_started = False
+                
+                # 重新启用发送按钮
+                self.send_btn.setEnabled(True)
+                self.send_btn.setText("对话")
+                
+        elif msg_type == "system":
+            self.chat_box.append(f"[系统] {content}\n")
+            
+        elif msg_type == "error":
+            self.chat_box.append(f"[错误] {content}\n")
+            # 出错时也要重新启用按钮
+            self.send_btn.setEnabled(True)
+            self.send_btn.setText("对话")
 
     def handle_translate(self):
         """
-            deal with directly translate
+            处理对话消息发送
         :return: none
         """
         text = self.input_box.text().strip()
         if not text:
             return
 
+        # 显示用户输入
         self.chat_box.append(f"你：{text}")
-        result = self.translation_manager.translate_text(text, self.lang_box.currentText())
-        self.chat_box.append(f"AI：{result}\n")
+        
+        # 通过消息队列发送给AI工作线程
+        self.conversation_manager.send_message(text)
+        
+        # 清空输入框
         self.input_box.clear()
+        
+        # 禁用发送按钮防止重复点击
+        self.send_btn.setEnabled(False)
+        self.send_btn.setText("发送中...")
 
     def handle_file_translate(self):
         """
@@ -149,26 +205,55 @@ class TranslatorGUI(QWidget):
         # 显示错误信息
         QMessageBox.critical(self, "翻译错误", f"翻译过程中发生错误：\n{error_msg}")
 
+    def process_conversation_messages(self):
+        """处理对话系统输出队列中的消息"""
+        try:
+            self.conversation_manager.process_output_messages()
+        except Exception as e:
+            print(f"处理对话消息时出错: {e}")
+            
     def closeEvent(self, event):
-        """
-            execute when close the app
-        :param event: close event
-        """
-        # 检查是否有翻译线程正在运行
-        if self.translation_manager.is_translating():
-            # 直接保存临时文件，无需用户确认
-            if self.translation_manager.save_temp_translation_file():
-                print("翻译进度已自动保存为临时文件")
-            else:
-                print("临时文件保存失败")
-
-        # 停止服务器
-        self.server.stop()
+        """窗口关闭事件"""
+        print("开始关闭应用程序...")
+        
+        try:
+            # 停止定时器
+            if hasattr(self, 'timer'):
+                print("正在停止定时器...")
+                self.timer.stop()
+                print("定时器已停止")
+        except Exception as e:
+            print(f"停止定时器时出错: {e}")
+        
+        try:
+            # 停止对话系统
+            if hasattr(self, 'conversation_manager'):
+                print("正在停止对话系统...")
+                self.conversation_manager.stop()
+                print("对话系统已停止")
+        except Exception as e:
+            print(f"停止对话系统时出错: {e}")
+        
+        try:
+            # 停止服务器
+            if hasattr(self, 'server'):
+                print("正在停止服务器...")
+                self.server.stop()
+                print("服务器已停止")
+        except Exception as e:
+            print(f"停止服务器时出错: {e}")
+            
+        print("正在接受关闭事件...")
         event.accept()
+        print("关闭事件已接受")
 
 
 if __name__ == "__main__":
+    print("正在启动应用程序...")
     app = QApplication(sys.argv)
     gui = TranslatorGUI()
     gui.show()
-    sys.exit(app.exec())
+    print("应用程序已启动，进入事件循环...")
+    exit_code = app.exec()
+    print(f"事件循环已退出，退出码: {exit_code}")
+    sys.exit(exit_code)

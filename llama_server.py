@@ -35,7 +35,18 @@ class LlamaServer:
             return
 
         try:
+            print("正在终止llama-server进程...")
             self.process.terminate()
+            # 等待进程结束，最多等待5秒
+            self.process.wait(timeout=5)
+            print("llama-server进程已终止")
+        except subprocess.TimeoutExpired:
+            print("进程终止超时，强制杀死进程...")
+            self.process.kill()
+            self.process.wait()
+            print("进程已被强制杀死")
         except Exception as e:
-            raise RuntimeError(f"终止进程失败: {e}") from e
+            print(f"终止进程时出错: {e}")
+            # 即使出错也继续执行
+            pass
 

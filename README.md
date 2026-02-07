@@ -151,103 +151,64 @@ gpu_backend = "cuda"
 
 ---
 
-## **8. 非功能需求**
+## **8. 系统架构改进**
 
-- 完全本地运行  
-- 不依赖网络  
-- 不上传数据  
-- 不进行内容过滤  
-- 稳定运行，不崩溃  
-- 目录结构清晰  
+### **8.1 异步消息队列架构**
+
+最新的系统采用了异步消息队列架构，主要改进包括：
+
+1. **UI与AI处理分离**：GUI界面运行在主线程，AI对话处理在后台线程
+2. **消息队列通信**：使用生产者-消费者模式进行线程间通信
+3. **实时流式输出**：支持AI回复的实时流式显示
+4. **非阻塞操作**：用户界面不会因AI处理而卡顿
+
+### **8.2 核心组件**
+
+- `message_queue.py`：消息队列管理器，处理GUI与工作线程间的通信
+- `conversation_worker.py`：AI对话工作线程，负责与LlamaServer通信
+- `main.py`：改进的GUI界面，支持异步对话
+
+### **8.3 工作流程**
+
+1. 用户在GUI中输入对话内容
+2. 点击"对话"按钮将消息放入输入队列
+3. 后台工作线程从队列获取消息并发送给LlamaServer
+4. 工作线程接收AI的流式回复并放入输出队列
+5. GUI定时器定期检查输出队列并更新显示
+6. 实现流畅的异步对话体验
 
 ---
 
-# 选定的模型
+## **9. 使用说明**
 
-[Qwen3‑4B‑Instruct‑2507](https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507)
+### **9.1 启动系统**
 
-# 选择的模型框架
+```bash
+# 启动主程序
+python main.py
 
-[llama.cpp](https://github.com/ggml-org/llama.cpp)
-
-## 安装过程(linux)
-
-### 安装nix
-
-先安装[nix](https://nixos.org/download/)
-
-注意：nix默认关闭了一些功能，启动
-
-```
-mkdir -p ~/.config/nix
-printf "experimental-features = nix-command flakes\n" >> ~/.config/nix/nix.conf
-
+# 或运行测试脚本
+python test_conversation.py
 ```
 
+### **9.2 配置文件**
+
+`config.json` 配置示例：
+```json
+{
+  "model": "D:/ai/model/Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+  "ctx_size": 4096,
+  "threads": 8,
+  "port": 8080
+}
 ```
-source ~/.profile 2>/dev/null || true
-source ~/.bashrc 2>/dev/null || true
 
-```
+### **9.3 功能特点**
 
-### 下载模型
+- **异步对话**：真正的异步处理，界面响应流畅
+- **流式输出**：AI回复实时显示，用户体验更好
+- **对话历史**：维护对话上下文，支持连续对话
+- **错误处理**：完善的异常处理机制
+- **资源管理**：合理的线程管理和资源释放
 
-一般huggingface模型页面右上方有三个小点的按钮，点开，选择Clone repository，可以使用git模式，但是git clone 默认不下载大文件，所以先让它支持大文件
-`sudo apt install git-lfs`
-
-然后再下载，文件很大，需要等待。
-
-
-
-## 安装过程(win)
-
-没啥好说的，如果有winGet，直接按说明文档来安装，没有任何问题，注意git版本可能要换个支持大文件的版本，huggingface也很人性化的帮你写好了命令去安装，当然还是winGet，然后直接下载模型，没啥技术含量
-
-## 转换模型
-
-我写了一个bat脚本,按照脚本的提示一步步操作就行了，linux也写了个，不过没测试。算了
-
-
-
-# 训练
-
-除了全参数训练，个人能搞的也就几种
-
-零训练
-
-## RAG
-
-### 概念
-
-检索增强
-
-RAG 的全名是：
-**Retrieval-Augmented Generation**
-
-**检索增强生成**
-
-拆开来看：
-
-* **Retrieval（检索）**：从外部知识库里找信息
-
-* **Augmented（增强）**：把这些信息提供给模型
-
-* **Generation（生成）**：模型根据检索到的知识生成答案
-
-### 组成
-
-#### Embedding 模型
-
-#### 向量数据库
-
-#### RAG 框架
-
-
-
-## LoRA / QLoRA
-
-轻量微调
-
-# 应用
-
-## 翻译
+---
