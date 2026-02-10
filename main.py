@@ -72,9 +72,6 @@ class TranslatorGUI(QWidget):
         self.timer.timeout.connect(self.process_conversation_messages)
         self.timer.start(100)  # 每100毫秒检查一次
 
-    def on_ai_message(self, chunk):
-        self.chat_box.append(chunk)
-
     def on_conversation_message(self, msg_type, content, metadata):
         """处理来自对话系统的消息"""
         if msg_type == "ai_response":
