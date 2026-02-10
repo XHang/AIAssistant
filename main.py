@@ -25,9 +25,6 @@ class TranslatorGUI(QWidget):
         self.setWindowTitle("AI 对话工具 - PySide6 + llama.cpp")
         self.resize(600, 500)
 
-        # 启动 llama-server
-        self.server = LlamaServer()
-        self.server.start()
 
         # 预加载配置以确保只读取一次
         config_manager.load_config()
@@ -71,6 +68,10 @@ class TranslatorGUI(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.process_conversation_messages)
         self.timer.start(100)  # 每100毫秒检查一次
+
+        # 启动 llama-server
+        self.server = LlamaServer()
+        self.server.start()
 
     def on_conversation_message(self, msg_type, content, metadata):
         """处理来自对话系统的消息"""
