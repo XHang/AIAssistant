@@ -18,6 +18,7 @@ class TranslatorGUI(QWidget):
 
     def __init__(self):
         super().__init__()
+        self._current_reply_started = None
         self.translation_manager = TranslationManager()
         self.setWindowTitle("AI 对话工具 - PySide6 + llama.cpp")
         self.resize(600, 500)
