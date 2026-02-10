@@ -2,7 +2,7 @@
    翻译相关文件
 """
 from typing import List
-import requests
+
 from config_manager import config_manager
 from handler import HANDLER_REGISTRY
 from handler.base import BaseHandler
@@ -31,5 +31,3 @@ class Translator:
 
         # 没有找到合适的处理器
         raise ValueError("没有找到可以处理该文本格式的翻译处理器")
-
-

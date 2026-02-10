@@ -1,14 +1,16 @@
-import sys
 import os
+import sys
+
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QTextEdit, QLineEdit,
     QPushButton, QFileDialog, QMessageBox, QComboBox, QProgressBar
 )
-from PySide6.QtCore import QTimer
-from llama_server import LlamaServer
+
 from config_manager import config_manager
-from translation_manager import TranslationManager
 from conversation_worker import ConversationManager
+from llama_server import LlamaServer
+from translation_manager import TranslationManager
 
 
 class TranslatorGUI(QWidget):
@@ -64,7 +66,7 @@ class TranslatorGUI(QWidget):
         layout.addWidget(self.progress)
 
         self.setLayout(layout)
-        
+
         # 设置定时器定期处理消息队列
         self.timer = QTimer()
         self.timer.timeout.connect(self.process_conversation_messages)
@@ -81,25 +83,25 @@ class TranslatorGUI(QWidget):
                 if not hasattr(self, '_current_reply_started') or not self._current_reply_started:
                     self.chat_box.append("AI：")
                     self._current_reply_started = True
-                
+
                 # 追加回复内容
                 self.chat_box.insertPlainText(content)
-                
+
                 # 强制GUI刷新
                 QApplication.processEvents()
-                
+
             elif metadata.get("complete"):  # 完整回复结束
                 # 添加换行和分隔符
                 self.chat_box.append("\n" + "-" * 30 + "\n")
                 self._current_reply_started = False
-                
+
                 # 重新启用发送按钮
                 self.send_btn.setEnabled(True)
                 self.send_btn.setText("对话")
-                
+
         elif msg_type == "system":
             self.chat_box.append(f"[系统] {content}\n")
-            
+
         elif msg_type == "error":
             self.chat_box.append(f"[错误] {content}\n")
             # 出错时也要重新启用按钮
@@ -117,13 +119,13 @@ class TranslatorGUI(QWidget):
 
         # 显示用户输入
         self.chat_box.append(f"你：{text}")
-        
+
         # 通过消息队列发送给AI工作线程
         self.conversation_manager.send_message(text)
-        
+
         # 清空输入框
         self.input_box.clear()
-        
+
         # 禁用发送按钮防止重复点击
         self.send_btn.setEnabled(False)
         self.send_btn.setText("发送中...")
@@ -142,21 +144,21 @@ class TranslatorGUI(QWidget):
         try:
             # 调用翻译管理器进行文件翻译
             self.translation_manager.translate_file(
-                file_path, 
+                file_path,
                 target_lang,
                 progress_callback=self.update_progress_bar,
                 finished_callback=self.on_translation_finished,
                 error_callback=self.on_translation_error
             )
-            
+
             # 显示进度条
             self.progress.setVisible(True)
             self.progress.setValue(0)
-            
+
             # 禁用按钮防止重复点击
             self.file_btn.setEnabled(False)
             self.file_btn.setText("翻译中...")
-            
+
         except Exception as e:
             QMessageBox.critical(self, "错误", str(e))
 
@@ -212,11 +214,11 @@ class TranslatorGUI(QWidget):
             self.conversation_manager.process_output_messages()
         except Exception as e:
             print(f"处理对话消息时出错: {e}")
-            
+
     def closeEvent(self, event):
         """窗口关闭事件"""
         print("开始关闭应用程序...")
-        
+
         try:
             # 停止定时器
             if hasattr(self, 'timer'):
@@ -225,7 +227,7 @@ class TranslatorGUI(QWidget):
                 print("定时器已停止")
         except Exception as e:
             print(f"停止定时器时出错: {e}")
-        
+
         try:
             # 停止对话系统
             if hasattr(self, 'conversation_manager'):
@@ -234,7 +236,7 @@ class TranslatorGUI(QWidget):
                 print("对话系统已停止")
         except Exception as e:
             print(f"停止对话系统时出错: {e}")
-        
+
         try:
             # 停止服务器
             if hasattr(self, 'server'):
@@ -243,7 +245,7 @@ class TranslatorGUI(QWidget):
                 print("服务器已停止")
         except Exception as e:
             print(f"停止服务器时出错: {e}")
-            
+
         print("正在接受关闭事件...")
         event.accept()
         print("关闭事件已接受")
