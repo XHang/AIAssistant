@@ -8,6 +8,7 @@ from handler.registry import register_handler
 @register_handler
 class JSONHandler(BaseHandler):
     def __init__(self, api_url):
+        super().__init__(api_url)
         self.url = api_url
         self._data = None
         self._keys = None
@@ -15,9 +16,9 @@ class JSONHandler(BaseHandler):
     def can_handle(self, text: str) -> bool:
         try:
             data = json.loads(text)
-            is_json:bool =  isinstance(data, dict)
+            is_json: bool = isinstance(data, dict)
             return is_json
-        except:
+        except (json.JSONDecodeError, TypeError):
             return False
 
     def load(self, text: str):
@@ -38,7 +39,7 @@ class JSONHandler(BaseHandler):
     def serialize(self) -> str:
         return json.dumps(self._data, ensure_ascii=False, indent=4)
 
-    def keep_the_same(self, text:str)->bool:
+    def keep_the_same(self, text: str) -> bool:
         # 检测是否包含日语字符（平假名、片假名）
         japanese_pattern = re.compile(r'[\u3040-\u309F\u30A0-\u30FF]')
         return not bool(japanese_pattern.search(text))

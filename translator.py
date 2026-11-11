@@ -1,8 +1,9 @@
 """
-   翻译相关文件
+翻译相关文件
 """
+
 from typing import List
-import requests
+
 from config_manager import config_manager
 from handler import HANDLER_REGISTRY
 from handler.base import BaseHandler
@@ -10,27 +11,31 @@ from handler.base import BaseHandler
 
 class Translator:
     """
-        翻译类
+    翻译类
     """
 
     def __init__(self):
         self.url = config_manager.get_api_url()
 
         # ⭐ 自动实例化所有已注册的 Handler
-        self.handlers: List[BaseHandler] = [
-            cls(self.url) for cls in HANDLER_REGISTRY
-        ]
+        self.handlers: List[BaseHandler] = [cls(self.url) for cls in HANDLER_REGISTRY]
 
     def _make_translation_request(self, text: str, target_lang: str) -> str:
         """统一的翻译API调用方法"""
         payload = {
             "model": "qwen3-4b",
             "messages": [
-                {"role": "system", "content": "你是一个专业翻译助手，只输出最合适译文（译文不要出现任何的日语），不要解释。"},
-                {"role": "user", "content": f"请翻译成{target_lang}：{text}，译文不要出现任何的日语"}
-            ]
+                {
+                    "role": "system",
+                    "content": "你是一个专业翻译助手，只输出最合适译文（译文不要出现任何的日语），不要解释。",
+                },
+                {
+                    "role": "user",
+                    "content": f"请翻译成{target_lang}：{text}，译文不要出现任何的日语",
+                },
+            ],
         }
-  
+
         try:
             r = requests.post(self.url, json=payload, timeout=120)
             r.raise_for_status()
@@ -42,7 +47,9 @@ class Translator:
         """翻译单个文本"""
         return self._make_translation_request(text, target_lang)
 
-    def translate_from_file(self, text: str, target_lang: str, progress_callback=None) -> str:
+    def translate_from_file(
+        self, text: str, target_lang: str, progress_callback=None
+    ) -> str:
         """翻译文件内容"""
         # 遍历所有已注册的处理器
         for handler in self.handlers:
@@ -52,7 +59,3 @@ class Translator:
 
         # 没有找到合适的处理器
         raise ValueError("没有找到可以处理该文本格式的翻译处理器")
-
-    def _translate_single(self, text: str, target_lang: str) -> str:
-        """处理器使用的单条翻译方法"""
-        return self._make_translation_request(text, target_lang)

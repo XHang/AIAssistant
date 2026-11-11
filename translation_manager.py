@@ -20,11 +20,7 @@ class TranslationManager:
         self.input_file_path = None
         self.current_handler = None
         self.signals = TranslationSignals()
-        
-    def translate_text(self, text, target_language):
-        """翻译文本"""
-        return self.translator.translate(text, target_language)
-        
+
     def translate_file(self, file_path, target_language, progress_callback=None,
                        finished_callback=None, error_callback=None):
         """翻译文件"""
