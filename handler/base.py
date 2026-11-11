@@ -56,10 +56,10 @@ class BaseHandler:
     def _translate_single(self, text: str, target_lang: str) -> str:
         """统一的翻译 API 调用"""
         payload = {
-            "model": "qwen3-4b",
+            "model": "abc",
             "messages": [
-                {"role": "system", "content": "你是一个专业翻译助手，只输出译文，不要解释。"},
-                {"role": "user", "content": f"请翻译成{target_lang}：{text}"}
+                {"role": "system", "content": "你是一个专业翻译助手，只输出最合适译文（译文不要出现任何的日语），不要解释。"},
+                {"role": "user", "content": f"请翻译成{target_lang}：{text}，译文不要出现任何的日语"}
             ]
         }
 

@@ -26,11 +26,11 @@ class Translator:
         payload = {
             "model": "qwen3-4b",
             "messages": [
-                {"role": "system", "content": "你是一个专业翻译助手，只输出译文，不要解释。"},
-                {"role": "user", "content": f"请翻译成{target_lang}：{text}"}
+                {"role": "system", "content": "你是一个专业翻译助手，只输出最合适译文（译文不要出现任何的日语），不要解释。"},
+                {"role": "user", "content": f"请翻译成{target_lang}：{text}，译文不要出现任何的日语"}
             ]
         }
-
+  
         try:
             r = requests.post(self.url, json=payload, timeout=120)
             r.raise_for_status()

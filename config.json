@@ -1,5 +1,5 @@
 {
-  "model": "D:/AI/TEXTMODEL/Qwen3-4B-Instruct-2507/Qwen3-4B-Instruct-2507-gguf.gguf",
+  "model": "D:/AI/TEXTMODEL/DarkIdol-Llama-3.1-8B-Instruct-1.2-Uncensored/DarkIdol-Llama-3.1-8B-Instruct-1.2-Uncensored-gguf.gguf",
   "ctx_size": 4096,
   "threads": 8,
   "port": 8080
